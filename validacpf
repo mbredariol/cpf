@@ -1,0 +1,50 @@
+module.exports = async function (context, req) {
+    // Obtém o CPF da query string ou do corpo da requisição
+    const cpf = req.query.cpf || (req.body && req.body.cpf);
+
+    if (!cpf) {
+        context.res = {
+            status: 400,
+            body: "Por favor, forneça um CPF."
+        };
+        return;
+    }
+
+    // Função para validar CPF
+    const isValidCPF = (cpf) => {
+        cpf = cpf.replace(/\D/g, ''); // Remove qualquer caractere não numérico
+        if (cpf.length !== 11) return false;
+        
+        // Valida o primeiro dígito verificador
+        let sum = 0;
+        let weight = 10;
+        for (let i = 0; i < 9; i++) {
+            sum += parseInt(cpf.charAt(i)) * weight--;
+        }
+        let firstVerifier = 11 - (sum % 11);
+        firstVerifier = firstVerifier >= 10 ? 0 : firstVerifier;
+
+        // Valida o segundo dígito verificador
+        sum = 0;
+        weight = 11;
+        for (let i = 0; i < 10; i++) {
+            sum += parseInt(cpf.charAt(i)) * weight--;
+        }
+        let secondVerifier = 11 - (sum % 11);
+        secondVerifier = secondVerifier >= 10 ? 0 : secondVerifier;
+
+        // Compara os dígitos verificadores
+        return cpf.charAt(9) == firstVerifier && cpf.charAt(10) == secondVerifier;
+    };
+
+    const valid = isValidCPF(cpf);
+
+    // Retorna a resposta
+    context.res = {
+        status: 200,
+        body: { valid: valid }
+    };
+};
+
+
+https://<nome-da-function-app>.azurewebsites.net/api/ValidateCPF?cpf=12345678909
